@@ -35,7 +35,7 @@ exports.receiveSensorData = async (req, res) => {
       });
     }
     
-    // Update latest sensor data in memory
+    // Create new data point
     const newData = {
       deviceId: device_id,
       temperature: sensors.temperature,
@@ -44,10 +44,17 @@ exports.receiveSensorData = async (req, res) => {
       timestamp: timestamp ? new Date(timestamp) : new Date()
     };
     
-    // Update current data
-    latestSensorData = newData;
+    // Update current data (preserve history array)
+    latestSensorData.deviceId = newData.deviceId;
+    latestSensorData.temperature = newData.temperature;
+    latestSensorData.humidity = newData.humidity;
+    latestSensorData.motion = newData.motion;
+    latestSensorData.timestamp = newData.timestamp;
     
     // Add to history (keep last MAX_HISTORY points)
+    if (!latestSensorData.history) {
+      latestSensorData.history = []; // Initialize if undefined
+    }
     latestSensorData.history.push(newData);
     if (latestSensorData.history.length > MAX_HISTORY) {
       latestSensorData.history.shift(); // Remove oldest
