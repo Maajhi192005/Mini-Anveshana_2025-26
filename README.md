@@ -1,4 +1,4 @@
-# 🌐 ESP32 IoT Dashboard - Mini Anveshana 2025-26# 🌐 ESP32 IoT Dashboard with Telegram Alerts
+# 🌐 Mini Anveshana 2025-26# 🌐 ESP32 IoT Dashboard with Telegram Alerts
 
 
 
