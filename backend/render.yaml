@@ -1,0 +1,24 @@
+# Render Deployment Configuration
+
+# Build command
+build:
+  command: npm install && npm run build
+  
+# Start command  
+start:
+  command: npm start
+
+# Environment
+environment: node
+
+# Node version
+nodeVersion: 18
+
+# Health check path
+healthCheckPath: /health
+
+# Auto-deploy
+autoDeploy: true
+
+# Region (optional)
+# region: oregon

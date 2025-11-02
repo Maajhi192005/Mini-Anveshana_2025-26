@@ -1,0 +1,177 @@
+/**
+ * ESP32 IoT Backend Server
+ * 
+ * Main server file that handles:
+ * - ESP32 sensor data reception
+ * - Database operations
+ * - Telegram notifications
+ * - REST API endpoints
+ * - WebSocket connections
+ */
+
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
+require('dotenv').config();
+
+const sensorRoutes = require('./src/routes/sensorRoutes');
+const alertRoutes = require('./src/routes/alertRoutes');
+const authRoutes = require('./src/routes/authRoutes');
+// Database removed - using in-memory storage
+const { initTelegramBot } = require('./src/services/telegramService');
+const { startWebSocketServer } = require('./src/services/websocketService');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// ========================================
+// Middleware Configuration
+// ========================================
+
+// Security headers
+app.use(helmet());
+
+// CORS configuration
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+
+// Body parsing
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Logging
+app.use(morgan('combined'));
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+});
+app.use('/api/', limiter);
+
+// Specific rate limit for ESP32 data endpoint
+const esp32Limiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 60, // 60 requests per minute (one every second)
+  skipFailedRequests: true
+});
+
+// ========================================
+// Routes
+// ========================================
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// API routes
+app.use('/api/sensor-data', esp32Limiter, sensorRoutes);
+app.use('/api/alerts', alertRoutes);
+app.use('/api/auth', authRoutes);
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    message: '🌐 ESP32 IoT Backend API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      sensorData: '/api/sensor-data',
+      alerts: '/api/alerts',
+      auth: '/api/auth'
+    },
+    documentation: '/api/docs'
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Endpoint not found',
+    path: req.path,
+    method: req.method
+  });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
+
+// ========================================
+// Server Initialization
+// ========================================
+
+async function startServer() {
+  try {
+    console.log('🚀 Starting ESP32 IoT Backend Server...\n');
+    
+    // Initialize Telegram bot (optional)
+    if (process.env.TELEGRAM_BOT_TOKEN) {
+      console.log('🤖 Starting Telegram bot...');
+      await initTelegramBot();
+      console.log('✓ Telegram bot initialized\n');
+    } else {
+      console.log('⚠ Telegram bot disabled (no token provided)\n');
+    }
+    
+    // Start Express server
+    const server = app.listen(PORT, () => {
+      console.log('✓ Server is running');
+      console.log(`  Port: ${PORT}`);
+      console.log(`  Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`  URL: http://localhost:${PORT}`);
+      console.log('\n📡 API Endpoints:');
+      console.log(`  POST /api/sensor-data - Receive sensor data from ESP32`);
+      console.log(`  GET  /api/sensor-data/latest - Get latest sensor data`);
+      console.log('\n✅ Server ready to accept connections!\n');
+    });
+    
+    // Initialize WebSocket server
+    startWebSocketServer(server);
+    console.log('✓ WebSocket server started\n');
+    
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      console.log('\n⚠ SIGTERM signal received: closing HTTP server');
+      server.close(() => {
+        console.log('✓ HTTP server closed');
+        process.exit(0);
+      });
+    });
+    
+    process.on('SIGINT', () => {
+      console.log('\n⚠ SIGINT signal received: closing HTTP server');
+      server.close(() => {
+        console.log('✓ HTTP server closed');
+        process.exit(0);
+      });
+    });
+    
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Start the server
+startServer();
+
+module.exports = app;

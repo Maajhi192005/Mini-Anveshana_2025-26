@@ -1,0 +1,150 @@
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.alert-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  border-left: 4px solid;
+  transition: all 0.2s;
+}
+
+.alert-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.alert-active {
+  border-left-color: #ef4444;
+  background: #fef2f2;
+}
+
+.alert-acknowledged {
+  border-left-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.alert-resolved {
+  border-left-color: #10b981;
+  background: #f0fdf4;
+  opacity: 0.7;
+}
+
+.alert-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.alert-message {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--dark);
+  margin: 0;
+}
+
+.alert-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.alert-status.active {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.alert-status.acknowledged {
+  background: #fed7aa;
+  color: #92400e;
+}
+
+.alert-status.resolved {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.alert-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.alert-detail {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.alert-detail strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.alert-time {
+  margin-left: auto;
+  font-style: italic;
+}
+
+.no-alerts {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-light);
+}
+
+.no-alerts svg {
+  margin-bottom: 16px;
+}
+
+.no-alerts p {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.no-alerts span {
+  font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+  .alert-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .alert-details {
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .alert-time {
+    margin-left: 0;
+  }
+}
